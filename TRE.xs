@@ -114,6 +114,13 @@ TRE_comp(pTHX_
       them, at least one is always allocated for $&
      */
     re->nparens = (U32)ri->re_nsub; /* cast from size_t */
+#if ((PERL_VERSION >= 37) && (PERL_SUBVERSION >= 8))
+    /* Later perls support physical and logical parens, which
+     * TRE does not, so set the logical parens to the number
+     * of physical parens. */
+    re->logical_nparens = (U32)ri->re_nsub; /* cast from size_t */
+#endif
+
     Newxz(re->offs, re->nparens + 1, regexp_paren_pair);
 
     /* return the regexp structure to perl */
@@ -137,7 +144,7 @@ get_hint(const char *key, I32 def)
 
 I32
 TRE_exec(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
-           char *strbeg, I32 minend, SV * sv,
+           char *strbeg, SSize_t minend, SV * sv,
            void *data, U32 flags)
 {
     regex_t *ri;
@@ -205,8 +212,9 @@ TRE_exec(pTHX_ REGEXP * const rx, char *stringarg, char *strend,
     return 1;
 }
 
+#if PERL_VERSION < 19
 char *
-TRE_intuit(pTHX_ REGEXP * const rx, SV * sv, char *strpos,
+TRE_intuit(pTHX_ REGEXP * const rx, SV * sv, const char * const strpos,
              char *strend, U32 flags, re_scream_pos_data *data)
 {
     PERL_UNUSED_ARG(rx);
@@ -217,6 +225,21 @@ TRE_intuit(pTHX_ REGEXP * const rx, SV * sv, char *strpos,
     PERL_UNUSED_ARG(data);
     return NULL;
 }
+#else
+char *
+TRE_intuit(pTHX_ REGEXP * const rx, SV * sv, const char * const strbeg, char *strpos,
+             char *strend, const U32 flags, re_scream_pos_data *data)
+{
+    PERL_UNUSED_ARG(rx);
+    PERL_UNUSED_ARG(sv);
+    PERL_UNUSED_ARG(strbeg);
+    PERL_UNUSED_ARG(strpos);
+    PERL_UNUSED_ARG(strend);
+    PERL_UNUSED_ARG(flags);
+    PERL_UNUSED_ARG(data);
+    return NULL;
+}
+#endif
 
 SV *
 TRE_checkstr(pTHX_ REGEXP * const rx)

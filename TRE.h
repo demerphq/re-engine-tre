@@ -12,9 +12,15 @@ TRE_comp(pTHX_
     SV * const, const U32);
 
 EXTERN_C I32      TRE_exec(pTHX_ REGEXP * const, char *, char *,
-                           char *, I32, SV *, void *, U32);
+                           char *, SSize_t, SV *, void *, U32);
+#if PERL_VERSION < 19
 EXTERN_C char *   TRE_intuit(pTHX_ REGEXP * const, SV *, char *,
                              char *, U32, re_scream_pos_data *);
+#else
+EXTERN_C char *   TRE_intuit(pTHX_ REGEXP * const, SV *, const char * const,
+                             char *, char *, const U32, re_scream_pos_data *);
+
+#endif
 EXTERN_C SV *     TRE_checkstr(pTHX_ REGEXP * const);
 EXTERN_C void     TRE_free(pTHX_ REGEXP * const);
 /* No numbered/named buff callbacks */
